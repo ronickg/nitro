@@ -18,7 +18,7 @@ export function ViewScreenImpl() {
   const safeArea = useSafeAreaInsets()
   const colors = useColors()
   const [counter, setCounter] = React.useState(0)
-  const [isUpdating, setIsUpdating] = React.useState(true)
+  const [isUpdating, setIsUpdating] = React.useState(false)
 
   const views = React.useMemo(
     () =>
@@ -71,6 +71,30 @@ export function ViewScreenImpl() {
   return (
     <View style={[styles.container, { paddingTop: safeArea.top }]}>
       <Text style={styles.header}>View</Text>
+
+      {/*
+        Two boxes, one style object. On iOS they are identical. On Android the
+        TestView draws nothing: no fill, no rotation, no fade.
+
+        Assert on `opacity` rather than `backgroundColor` - TestView paints its
+        own surface, which masks whether the background arrived, but nothing
+        native can override a view's alpha.
+      */}
+      <View style={styles.reproRow}>
+        <View style={styles.reproCell}>
+          <Text style={styles.reproLabel}>RN View</Text>
+          <View style={styles.reproBox} />
+        </View>
+        <View style={styles.reproCell}>
+          <Text style={styles.reproLabel}>TestView (Nitro)</Text>
+          <TestView
+            style={styles.reproBox}
+            isBlue={false}
+            hasBeenCalled={false}
+            colorScheme="light"
+          />
+        </View>
+      </View>
       <View style={styles.topControls}>
         <View style={styles.flex} />
         <Text style={styles.buildTypeText}>{NitroModules.buildType}</Text>
@@ -102,6 +126,14 @@ export function ViewScreen() {
   const isFocused = useIsFocused()
   return isFocused ? <ViewScreenImpl /> : null
 }
+
+const REPRO_BOX = {
+  width: 120,
+  height: 120,
+  backgroundColor: '#00C000',
+  transform: [{ rotate: '10deg' }],
+  opacity: 0.4,
+} as const
 
 const styles = StyleSheet.create({
   header: {
@@ -155,6 +187,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  reproRow: { flexDirection: 'row', gap: 40, padding: 20, paddingTop: 30 },
+  reproCell: { gap: 24 },
+  reproLabel: { fontSize: 12, fontWeight: 'bold', color: '#888' },
+  reproBox: REPRO_BOX,
   view: {
     width: `${100 / VIEWS_X}%`,
     height: `${100 / VIEWS_Y}%`,
